@@ -8,7 +8,6 @@ import ProtectedRoute from "./Components/ProtectedRoute";
 import { UserAuthContextProvider } from "./auth/UserAuthContext";
 import PhoneSign from "./Components/PhoneSignUp";
 
-
 function App() {
   return (
     <Container style={{ width: "400px" }}>

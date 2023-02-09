@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
@@ -7,7 +8,6 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   RecaptchaVerifier,
-  signInWithPhoneNumber,
 } from "firebase/auth";
 import { auth } from "../firebase";
 
@@ -30,14 +30,14 @@ export function UserAuthContextProvider({ children }) {
     return signInWithPopup(auth, googleAuthProvider);
   }
 
-  function setUpRecaptcha(number) {
+  function setUpRecaptha(number) {
     const recaptchaVerifier = new RecaptchaVerifier(
       "recaptcha-container",
       {},
       auth
     );
     recaptchaVerifier.render();
-    return signInWithPhoneNumber(auth, number, recaptchaVerifier);
+    return (auth, number, recaptchaVerifier);
   }
 
   useEffect(() => {
@@ -53,7 +53,14 @@ export function UserAuthContextProvider({ children }) {
 
   return (
     <userAuthContext.Provider
-      value={{ user, logIn, signUp, logOut, googleSignIn, setUpRecaptcha }}
+      value={{
+        user,
+        logIn,
+        signUp,
+        logOut,
+        googleSignIn,
+        setUpRecaptha,
+      }}
     >
       {children}
     </userAuthContext.Provider>

@@ -1,148 +1,127 @@
-import React, { useState } from "react";
-import { Form, Button, Alert } from "react-bootstrap";
-import "react-phone-number-input/style.css";
-import PhoneInput from "react-phone-number-input";
-import { Link } from "react-router-dom";
-import { useUserAuth } from "../auth/UserAuthContext";
-import { async } from "@firebase/util";
+import { BsFillShieldLockFill, BsTelephoneFill } from "react-icons/bs";
+import { CgSpinner } from "react-icons/cg";
+import OtpInput from "otp-input-react";
+import { useState } from "react";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { auth } from "../firebase";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { toast, Toaster } from "react-hot-toast";
+// import '../index.css'
 
-const PhoneSign = () => {
-  const [number, setNumber] = useState("");
-  const [error, setError] = useState("");
-  const { setUpRecaptcha } = useUserAuth();
-  const getoTp = async (e) => {
-    e.preventDefault();
-    setError("");
-    if (number === "" || number === undefined)
-      return setError("please enter a valid phone number");
-    try {
-      const response = await setUpRecaptcha(number);
-      console.log(response);
-    } catch (err) {
-      setError(err.message);
+const App = () => {
+  const [otp, setOtp] = useState("");
+  const [ph, setPh] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showOTP, setShowOTP] = useState(false);
+  const [user, setUser] = useState(null);
+
+  function onCaptchVerify() {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container",
+        {
+          size: "invisible",
+          callback: (response) => {
+            onSignup();
+          },
+          "expired-callback": () => {},
+        },
+        auth
+      );
     }
-    console.log(number);
-  };
+  }
+
+  function onSignup() {
+    setLoading(true);
+    onCaptchVerify();
+
+    const appVerifier = window.recaptchaVerifier;
+
+    const formatPh = "+" + ph;
+
+    signInWithPhoneNumber(auth, formatPh, appVerifier)
+      .then((confirmationResult) => {
+        window.confirmationResult = confirmationResult;
+        setLoading(false);
+        setShowOTP(true);
+        toast.success("OTP sended successfully!");
+      })
+      .catch((error) => {
+        console.log(error);
+        setLoading(false);
+      });
+  }
+
+  function onOTPVerify() {
+    setLoading(true);
+    window.confirmationResult
+      .confirm(otp)
+      .then(async (res) => {
+        console.log(res);
+        setUser(res.user);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+      });
+  }
+
   return (
-    <>
-      <div className="box">
-        <h2 className="mb3">Можешь зарегаться через номер</h2>
-        {error && <Alert variant="danger">{error}</Alert>}
-        <Form onSubmit={getoTp}>
-          <Form.Group className="mb3" controlId="formBasicPhoneNumber">
-            <PhoneInput
-              defaultCountry=""
-              value={number}
-              onChange={setNumber}
-              placeholder="enter your phone number"
-            />
-            <div id="recaptcha-container" />
-          </Form.Group>
-          <div className="button-rigth">
-            <Link to="/">
-              <Button variant="secondary">cancel</Button> &nbsp;
-            </Link>
-            <Button variant="secondary" type="submit">
-              send otp
-            </Button>
+    <section className="sections">
+      <div>
+        <Toaster toastOptions={{ duration: 4000 }} />
+        <div id="recaptcha-container"></div>
+        {user ? (
+          <h2 className="text-center">👍Login Success</h2>
+        ) : (
+          <div className="container">
+            <h1 className="text-center">
+              Welcome to <br /> to Geeks
+            </h1>
+            {showOTP ? (
+              <>
+                <div className="bg-white">
+                  <BsFillShieldLockFill size={30} />
+                </div>
+                <label htmlFor="otp" className="text-center">
+                  Enter your OTP
+                </label>
+                <OtpInput
+                  value={otp}
+                  onChange={setOtp}
+                  OTPLength={6}
+                  otpType="number"
+                  disabled={false}
+                  autoFocus
+                  className="opt-container "
+                ></OtpInput>
+                <button onClick={onOTPVerify} className="otpbtn">
+                  {loading && <CgSpinner size={20} className="animate-spin" />}
+                  <span>Verify OTP</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="rounded-full">
+                  <BsTelephoneFill size={30} />
+                </div>
+                <label htmlFor="" className="text-center">
+                  Verify your phone number
+                </label>
+                <PhoneInput country={"KG"} value={ph} onChange={setPh} />
+                <button onClick={onSignup} className="text-white rounded">
+                  {loading && <CgSpinner size={20} className="animate-spin" />}
+                  <span>Send code via SMS</span>
+                </button>
+              </>
+            )}
           </div>
-        </Form>
+        )}
       </div>
-    </>
+    </section>
   );
 };
 
-export default PhoneSign;
-///////////ne rabochi code 
-// import React, { useState } from "react";
-// import { Button, Form, Alert } from "react-bootstrap";
-// import PhoneInput from "react-phone-number-input";
-// import "react-phone-number-input/style.css";
-// import { Link, useNavigate } from "react-router-dom";
-// import { useUserAuth } from "../auth/UserAuthContext";
-
-// const PhoneSignUp = () => {
-//   const [number, setNumber] = useState("");
-//   const [otp, setOtp] = useState("");
-//   const [error, setError] = useState("");
-//   const { setUpRecaptcha } = useUserAuth();
-//   const [flag, setFlag] = useState(false);
-//   const [confirmObj, setConfirmObj] = useState("");
-//   const navigate = useNavigate();
-
-//   const getOtp = async (e) => {
-//     e.preventDefault();
-//     setError("");
-//     if (number === "" || number === undefined)
-//       return setError("please enter a valid phone number");
-//     try {
-//       const response = await setUpRecaptcha(number);
-//       console.log(response);
-  //     setConfirmObj(response);
-  //     setFlag(true);
-  //   } catch (err) {
-  //     setError(err.message);
-  //   }
-  //   console.log(number);
-  // };
-
-  // const verifyOtp = async (e) => {
-  //   e.preventDefault();
-  //   console.log(otp);
-  //   if (otp === "" || otp === null) return;
-  //   try {
-  //     setError("");
-  //     await confirmObj.confirm(otp);
-  //     navigate("/home");
-  //   } catch (err) {
-  //     setError(err.message);
-  //   }
-  // };
-
-  // return (
-  //   <>
-  //     <div className="p-4 box">
-  //       <h2 className="mb-3">Firebase Auth phone</h2>
-  //       {error && <Alert variant="danger">{error}</Alert>}
-//         <Form onSubmit={getOtp}>
-//           <Form.Group className="mb-3" controlId="formBasicPhoneNumber">
-//             <PhoneInput
-//               defaultCountry="KG"
-//               value={number}
-//               onChange={setNumber}
-//               placeholder="enter your phone"
-//             />
-//           </Form.Group>
-//           <div id="recaptcha-container" />
-//           <div className="button-right">
-//             <Link to="/">
-//               <Button variant="secondary">cancel</Button> &nbsp;
-//             </Link>
-//             <Button variant="primary" type="submit">
-//               send
-//             </Button>
-//           </div>
-//         </Form>
-
-//         <Form onSubmit={verifyOtp}>
-//           <Form.Group className="mb-3" controlId="formBasicPhone">
-//             <Form.Control>
-//               type="text" placeholder="enter" onChange ={""}
-//               {(e) => setOtp(e.target.value)}
-//             </Form.Control>
-//           </Form.Group>
-//           <div className="button-right">
-//             <Link to="/">
-//               <Button variant="secondary">cancel</Button> &nbsp;
-//             </Link>
-//             <Button variant="primary" type="submit">
-//               send
-//             </Button>
-//           </div>
-//         </Form>
-//       </div>
-//     </>
-//   );
-// };
-
-// export default PhoneSignUp;
+export default App;
